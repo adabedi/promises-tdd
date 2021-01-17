@@ -1,3 +1,5 @@
+import { call } from "function-bind";
+
 const PENDING = "PENDING";
 const FULFILLED = "FULFILLED";
 const REJECTED = "REJECTED";
@@ -27,13 +29,22 @@ export default class MyPromise {
   }
 
   onResolve(promise, executor) {
+    let called = false;
     function onFulfill(value) {
+      if (called) return;
+      called = true;
       promise.fulfill(promise, value);
     }
     function onReject(reason) {
+      if (called) return;
+      called = true;
       promise.reject(promise, reason);
     }
-    executor(onFulfill, onReject);
+    try {
+      executor(onFulfill, onReject);
+    } catch (error) {
+      onReject(error);
+    }
   }
 
   handleResolved(promise, onFulfilled, onRejected) {
